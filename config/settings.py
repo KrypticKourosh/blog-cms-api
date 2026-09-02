@@ -161,3 +161,5 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "A production-ready Blog/CMS API built with Django REST Framework",
     "VERSION": "1.0.0",
 }
+
+AUTH_USER_MODEL = 'users.User'
