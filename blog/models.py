@@ -1,3 +1,120 @@
 from django.db import models
+from django.utils.text import slugify
+from django.conf import settings
 
-# Create your models here.
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True, blank=True) # can be generated
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = 'Categories'
+        ordering = ['name']
+
+    def save(self, *args, **kwargs): # generate a slug if empty
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=60, unique=True, blank=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+class Post(models.Model):
+    class Status(models.TextChoices): 
+        DRAFT = 'draft', 'Draft' # database value, display value
+        PUBLISHED = 'published', 'Published'
+
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=270, unique=True, blank=True)
+    content = models.TextField()
+    summary = models.TextField(blank=True)
+
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='posts', # enables user.posts.all()   
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='posts'
+    )
+    tags = models.ManyToManyField(
+        Tag,
+        blank=True,
+        related_name='posts',
+    )
+    status = models.CharField(
+        choices=Status.choices,
+        max_length=10,
+        default=Status.DRAFT
+    )
+
+    views_count = models.PositiveIntegerField(default=0)
+    likes_count = models.PositiveIntegerField(default=0)
+
+    featured_image = models.ImageField(
+        upload_to='posts/%Y/%m/',
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-slug']), # for URL searches
+            models.Index(fields=['-title']),
+            models.Index(fields=['-status']),
+            models.Index(fields=['-created_at']),
+        ]
+
+    def save(self, *args, **kwargs):
+        '''
+        Checks if an `slug` is set, if not, generate one using the post's title.
+        
+        since the title is not unique, add a number at the end of the slug for duplicate titles, ex.
+            title: "John Doe" ~ slug: "john-doe"
+            title: "John Doe" (again) ~ slug: "john-doe-1"
+        '''
+        if not self.slug:
+            base_slug = slugify(self.title)
+            slug = base_slug
+            counter = 1
+
+            while Post.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f'{base_slug}-{counter}'
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_published(self):
+        return self.status == self.Status.PUBLISHED
