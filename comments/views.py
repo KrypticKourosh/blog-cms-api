@@ -1,5 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 from .serializers import CommentSerializer, CommentUpdateSerializer
 from .permissions import IsCommentAuthorOrReadOnly
 from .models import Comment
@@ -9,6 +11,10 @@ class CommentViewSet(viewsets.ModelViewSet):
         IsAuthenticatedOrReadOnly,
         IsCommentAuthorOrReadOnly
     ]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ["post", "author", "parent"]
+    ordering_fields = ["created_at"]
+    ordering = ["created_at"]
 
     def get_serializer_class(self):
         if self.action in ['update', 'partial_update']:
