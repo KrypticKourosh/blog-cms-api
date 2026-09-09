@@ -11,6 +11,7 @@ class CommentAdmin(admin.ModelAdmin):
         'author',
         'created_at',
         'parent',
+        'is_active'
     ]
     list_filter = [
         'post',

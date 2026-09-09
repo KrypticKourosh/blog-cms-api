@@ -31,6 +31,7 @@ urlpatterns = [
 
     # Blog
     path('api/', include('blog.urls')),
+    path('api/', include('comments.urls')),
 
     # API Docs
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

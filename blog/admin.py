@@ -18,6 +18,7 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
         'title',
         'author',
         'category',
