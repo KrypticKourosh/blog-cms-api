@@ -53,30 +53,26 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         '''
-        Depending on the user's status (staff, authenticated, anonymous)
-        the actions may differ.
-
-        Instead of using `Post.objects.all()` use
-        `Post.objects.select_related({One-to-Many}).prefetch_related({Many-to-Many})`
-        for faster queries.
+        Different user types (staff, authenticated, anonymous)
+        see different posts lists.
         '''
         user = self.request.user
+        base_query = Post.objects.select_related(
+            'author', 'category'
+        ).prefetch_related('tags') # faster queries
 
         # Staff can see everything
         if user.is_staff:
-            return Post.objects.select_related('author', 'category').prefetch_related('tags')
+            return base_query
 
         # Logged-in users can see all the published posts + their own drafts
         if user.is_authenticated:
-            return Post.objects.filter(
-                models.Q(status=Post.Status.PUBLISHED) | # type: ignore
-                models.Q(author=user)   # type: ignore
-            ).select_related('author', 'category').prefetch_related('tags')
+            return base_query.filter(
+                Q(status=Post.Status.PUBLISHED) | Q(author=user)
+            )
 
         # Anonymous users can only see the published posts
-        return Post.objects.filter(
-            models.Q(status=Post.Status.PUBLISHED) # type: ignore
-        ).select_related("author", "category").prefetch_related("tags")
+        return base_query.filter(status=Post.Status.PUBLISHED)
 
     def get_serializer_class(self):
         '''Different serializers for different requests'''
