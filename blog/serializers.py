@@ -28,10 +28,18 @@ class PostListSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True) # author is set automatically
     category = CategorySerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = '__all__'
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
+
 
 class PostDetailSerializer(serializers.ModelSerializer):
     '''
@@ -46,6 +54,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True) # author is set automatically
     category = CategorySerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
+    is_liked = serializers.SerializerMethodField()
 
 
     # write-only fields for create / update:
@@ -77,6 +86,12 @@ class PostDetailSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
 
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
+    
     def create(self, validated_data):
         '''
         Since tags has a many-to-many relation with post

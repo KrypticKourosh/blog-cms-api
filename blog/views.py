@@ -5,10 +5,10 @@ from rest_framework.response import Response
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
-from django.db import models
+from django.db.models import Q, F
 
 from .models import (
-    Category, Tag, Post
+    Category, Tag, Post, Like
 )
 from .serializers import (
     CategorySerializer, TagSerializer,
@@ -119,9 +119,46 @@ class PostViewSet(viewsets.ModelViewSet):
             'serializer': serializer,
             'serializer_class': self.get_serializer_class(),
         })
-        
 
+    def retrieve(self, request, *args, **kwargs):
+        '''Increment the post's `views_count`'''
+        instance = self.get_object()
 
+        # Increment views_count
+        Post.objects.filter(pk=instance.pk).update(views_count=F('views_count') + 1)
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def like(self, request, slug=None):
+        post = self.get_object()
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+
+        if created:
+            Post.objects.filter(pk=post.pk).update(likes_count=F('likes_count') + 1)
+            return Response({'status': 'liked'}, status=status.HTTP_201_CREATED)
+
+        return Response({'status': 'already liked'}, status=status.HTTP_200_OK)
+    
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def unlike(self, request, slug=None):
+        post = self.get_object()
+        deleted, _ = Like.objects.filter(user=request.user, post=post).delete()
+
+        if deleted:
+            Post.objects.filter(pk=post.pk).update(likes_count=F('likes_count') - 1)
+            return Response({'status': 'unliked'}, status=status.HTTP_200_OK)
+
+        return Response({'status': 'not liked'}, status=status.HTTP_200_OK)
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils import timezone
 from .models import (
-    Category, Tag, Post
+    Category, Tag, Post, Like
 )
 
 @admin.register(Category)
@@ -15,6 +15,11 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     prepopulated_fields = {'slug': ('name', )}
     search_fields = ('name', )
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'post', 'created_at', )
+    list_filter = ('created_at', )
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
