@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: blogcms
+      POSTGRES_USER: bloguser
+      POSTGRES_PASSWORD: blogpassword
+    ports:
+      - "5432:5432"
+    healthcheck: # check if postgres is ready before using it 
+      test: ["CMD-SHELL", "pg_isready -U bloguser -d blogcms"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://bloguser:blogpassword@db:5432/blogcms
+
+volumes:
+  postgres_data:
+  media_volume:
