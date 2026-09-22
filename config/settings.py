@@ -163,6 +163,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Blog CMS API",
     "DESCRIPTION": "A production-ready Blog/CMS API built with Django REST Framework",
     "VERSION": "1.0.0",
+    'COMPONENT_SPLIT_REQUEST': True, # Choose file button
 }
 
 AUTH_USER_MODEL = 'users.User'

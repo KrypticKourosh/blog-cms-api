@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-class AuthorSerializer(serializers.ModelSerializer):
+class CommentAuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
@@ -17,7 +17,7 @@ class AuthorSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = AuthorSerializer(read_only=True)
+    author = CommentAuthorSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
 
     class Meta:

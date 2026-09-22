@@ -29,6 +29,7 @@ class PostListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
     is_liked = serializers.SerializerMethodField()
+    featured_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -40,7 +41,17 @@ class PostListSerializer(serializers.ModelSerializer):
             return obj.likes.filter(user=request.user).exists()
         return False
 
+    def get_featured_image(self, obj):
+        '''Return image URL if it exists'''
+        request = self.context.get('request')
 
+        if obj.featured_image and hasattr(obj.featured_image, 'url'):
+            relative_url = obj.featured_image.url
+            if request is not None:
+                return request.build_absolute_uri(relative_url)
+            return relative_url
+        return None
+                
 class PostDetailSerializer(serializers.ModelSerializer):
     '''
     Use this serializer to retrieve / create / update
@@ -55,6 +66,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
     is_liked = serializers.SerializerMethodField()
+    featured_image = serializers.ImageField(required=False, allow_null=True) # upload
 
 
     # write-only fields for create / update:
@@ -83,7 +95,8 @@ class PostDetailSerializer(serializers.ModelSerializer):
             'views_count',
             'likes_count',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'published_at'
         ]
 
     def get_is_liked(self, obj):
@@ -91,6 +104,21 @@ class PostDetailSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.likes.filter(user=request.user).exists()
         return False
+
+    def to_representation(self, instance):
+        '''Return absolute URL for images (if a request is sent)'''
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+
+        if instance.featured_image and hasattr(instance.featured_image, 'url'):
+            relative_url = instance.featured_image.url
+            if request is not None:
+                abosulte_url = request.build_absolute_uri(relative_url)
+                representation['featured_image'] = abosulte_url
+            else: # no request / project-level use 
+                representation['featured_image'] = relative_url
+
+        return representation
     
     def create(self, validated_data):
         '''
@@ -111,10 +139,18 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', [])
+
+        # new image
+        if 'featured_image' in validated_data:
+            # delete old image if exists
+            if instance.featured_image:
+                instance.featured_image.delete(save=False)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
         instance.save()
+
         if tags:
             instance.tags.set(tags)
         return instance
-        

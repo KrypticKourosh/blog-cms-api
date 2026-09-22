@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from django.conf import settings
+from .validators import validate_image_extension, validate_image_size
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -76,6 +77,7 @@ class Post(models.Model):
         upload_to='posts/%Y/%m/',
         blank=True,
         null=True,
+        validators=[validate_image_size, validate_image_extension]
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

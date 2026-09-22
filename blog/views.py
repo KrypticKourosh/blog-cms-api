@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
@@ -15,6 +16,7 @@ from .serializers import (
     PostListSerializer, PostDetailSerializer
 )
 from .permissions import IsAuthorOrReadOnly
+
 
 class PostViewSet(viewsets.ModelViewSet):
     """
@@ -50,6 +52,7 @@ class PostViewSet(viewsets.ModelViewSet):
     ]
     ordering = ['-created_at']
     lookup_field = 'slug' # use slug instead of IDs in the url
+    parser_classes = [MultiPartParser, FormParser, JSONParser] # use Multipart for images
 
     def get_queryset(self):
         '''
