@@ -1,10 +1,16 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from .views import CommentViewSet
 
-router = DefaultRouter()
-router.register(r'comments', CommentViewSet, basename='comment')
-
 urlpatterns = [
-    path('', include(router.urls))
+    path(
+        'comments/<int:pk>/',
+        CommentViewSet.as_view({
+            'get': 'retrieve',
+            'put': 'update',
+            'patch': 'partial_update',
+            'delete': 'destroy',
+            # /POST/ method was moved to blog endpoints, see blog.urls
+        },
+        name='comment-detail')    
+    ),
 ]

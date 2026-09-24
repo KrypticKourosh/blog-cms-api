@@ -26,6 +26,7 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'is_active', 
             'author',
+            'post',
             'created_at',
             'updated_at',
         ]
