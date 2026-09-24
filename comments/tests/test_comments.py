@@ -19,26 +19,24 @@ class TestComments:
         self.other_post = PostFactory(status=Post.Status.PUBLISHED)
         self.comment = CommentFactory(author=self.comment_author, post=self.post)
 
-    def test_anonymous_user_can_list_comments(self):
-        url = reverse('comment-list')
+    def test_anonymous_user_can_get_comment_by_id(self):
+        url = reverse('comment-detail', kwargs={'pk': self.comment.pk})
         response = self.client.get(url)
         assert response.status_code == status.HTTP_200_OK
 
     def test_anonymous_user_cannot_comment(self):
-        url = reverse('comment-list')
+        url = reverse('post-comments', kwargs={'post_slug': self.post.slug})
         data = {
-            'content': 'Comment by anonymous user',
-            'post': self.post.id
+            'content': 'Comment by anonymous user'
         }
         response = self.client.post(url, data)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED 
 
     def test_authenticated_user_can_comment(self):
         self.client.force_authenticate(user=self.comment_author)
-        url = reverse('comment-list')
+        url = reverse('post-comments', kwargs={'post_slug': self.post.slug})
         data = {
-            'content': 'Comment by authenticated user',
-            'post': self.post.id
+            'content': 'Comment by authenticated user'
         }
         response = self.client.post(url, data)
         assert response.status_code == status.HTTP_201_CREATED
@@ -58,11 +56,22 @@ class TestComments:
 
     def test_cannot_reply_from_different_post(self):
         self.client.force_authenticate(user=self.other_user) # or user in general
-        url = reverse('comment-list')
+        url = reverse('post-comments', kwargs={'post_slug': self.other_post.slug})
         data = {
             'content': 'Invalid reply',
-            'post': self.other_post.id,
             'parent': self.comment.id,
         }
         response = self.client.post(url, data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_can_reply_from_the_same_post(self):
+        self.client.force_authenticate(user=self.other_user) # or user in general
+        url = reverse('post-comments', kwargs={'post_slug': self.post.slug})
+        data = {
+            'content': 'valid reply',
+            'parent': self.comment.id,
+        }
+        response = self.client.post(url, data)
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data['content'] == 'valid reply'
+        assert response.data['parent'] == self.comment.id

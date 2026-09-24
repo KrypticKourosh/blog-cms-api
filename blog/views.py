@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
+from drf_spectacular.utils import extend_schema
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db.models import Q, F
@@ -97,6 +98,17 @@ class PostViewSet(viewsets.ModelViewSet):
             instance.published_at = timezone.now()
             instance.save(updated_fields=['published_at'])
 
+    def retrieve(self, request, *args, **kwargs):
+        '''Increment the post's `views_count`'''
+        instance = self.get_object()
+
+        # Increment views_count
+        Post.objects.filter(pk=instance.pk).update(views_count=F('views_count') + 1)
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @extend_schema(request=None)
     @action(
         detail=True,
         methods=['post'],
@@ -119,16 +131,7 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(post)
         return Response(serializer.data)
 
-    def retrieve(self, request, *args, **kwargs):
-        '''Increment the post's `views_count`'''
-        instance = self.get_object()
-
-        # Increment views_count
-        Post.objects.filter(pk=instance.pk).update(views_count=F('views_count') + 1)
-        instance.refresh_from_db()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
+    @extend_schema(request=None)
     @action(
         detail=True,
         methods=['post'],
@@ -143,7 +146,8 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response({'status': 'liked'}, status=status.HTTP_201_CREATED)
 
         return Response({'status': 'already liked'}, status=status.HTTP_200_OK)
-    
+
+    @extend_schema(request=None)
     @action(
         detail=True,
         methods=['post'],

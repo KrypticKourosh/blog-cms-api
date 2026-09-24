@@ -10,7 +10,7 @@ urlpatterns = [
             'patch': 'partial_update',
             'delete': 'destroy',
             # /POST/ method was moved to blog endpoints, see blog.urls
-        },
-        name='comment-detail')    
+        }),
+        name='comment-detail',
     ),
 ]
