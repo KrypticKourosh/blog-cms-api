@@ -8,7 +8,7 @@ from .views import RegisterAPIView, ProfileAPIView
 
 urlpatterns = [
     path('register/', RegisterAPIView.as_view(), name='register'),
-    path('login/', TokenObtainPairView.as_view(), name='token_obtain-pair'),
+    path('login/', TokenObtainPairView.as_view(), name='token-obtain-pair'),
     path('logout/', TokenBlacklistView.as_view(), name='token-blacklist'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('profile/', ProfileAPIView.as_view(), name='profile'),

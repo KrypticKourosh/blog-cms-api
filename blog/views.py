@@ -102,7 +102,7 @@ class PostViewSet(viewsets.ModelViewSet):
         methods=['post'],
         permission_classes=[permissions.IsAuthenticated]
     )
-    def publish(self, request):
+    def publish(self, request, slug=None):
         '''Publish a draft post'''
         post = self.get_object()
         if post.author != request.user and not request.user.is_staff:
@@ -117,11 +117,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
         # return the updated post
         serializer = self.get_serializer(post)
-        return Response({
-            'serializer.data': serializer.data,
-            'serializer': serializer,
-            'serializer_class': self.get_serializer_class(),
-        })
+        return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         '''Increment the post's `views_count`'''
