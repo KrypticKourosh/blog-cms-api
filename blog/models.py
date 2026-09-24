@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from django.utils import timezone
 from django.conf import settings
 from .validators import validate_image_extension, validate_image_size
 
@@ -95,11 +96,13 @@ class Post(models.Model):
 
     def save(self, *args, **kwargs):
         '''
-        Checks if an `slug` is set, if not, generate one using the post's title.
+        1. Fill the `slug` field (if left empty) by slugifying the title.
         
         since the title is not unique, add a number at the end of the slug for duplicate titles, ex.
             title: "John Doe" ~ slug: "john-doe"
             title: "John Doe" (again) ~ slug: "john-doe-1"
+
+        2. Set published_at according to status
         '''
         if not self.slug:
             base_slug = slugify(self.title)
@@ -111,6 +114,11 @@ class Post(models.Model):
                 counter += 1
 
             self.slug = slug
+
+        if self.status == self.Status.PUBLISHED and self.published_at is None:
+            self.published_at = timezone.now()
+        if self.status == self.Status.DRAFT:
+            self.published_at = None
 
         super().save(*args, **kwargs)
 
