@@ -25,7 +25,7 @@ A **RESTful API** built with **Django's REST Framework** for blogging with user 
 - Docker & Docker Compose
 - pytest + factory_boy
 
-(See requirements.txt for exact versions.)
+(See `requirements.txt` for exact versions.)
 
 ## Getting Started
 
@@ -35,12 +35,15 @@ git clone https://github.com/KrypticKourosh/blog-cms-api/
 cd blog-cms-api
 ```
 
-### Option 1: Docker (Recommended)
-
+Set up `.env` file:
 ```bash
 cp .env.example .env
 # Edit .env and set a strong SECRET_KEY
+```
 
+### Option 1: Docker (Recommended)
+
+```bash
 docker compose up --build
 ```
 
@@ -57,7 +60,6 @@ docker compose exec web python manage.py createsuperuser
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
