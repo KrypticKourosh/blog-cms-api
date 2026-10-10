@@ -7,7 +7,7 @@ def validate_image_size(image):
         raise ValidationError(f'Image size cannot be more than {max_size_mb}MB.')
 
 def validate_image_extension(image):
-    valid_extensions = ['.jgep', 'jpg', '.png', '.webp', '.gif']
+    valid_extensions = ['.jpeg', 'jpg', '.png', '.webp', '.gif']
     extension = image.name.lower().split('.')[-1]
     if f'.{extension}' not in valid_extensions:
         raise ValidationError(f'Unsupported image format. Use: {valid_extensions}')
